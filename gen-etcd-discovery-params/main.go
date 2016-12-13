@@ -135,13 +135,13 @@ func buildCluster(s *ec2cluster.Cluster) (initialClusterState string, initialClu
 	initialClusterState = "new"
 	initialCluster = []string{}
 	for _, instance := range clusterInstances {
-		if instance.PrivateIpAddress == nil {
+		if instance.PrivateDnsName == nil {
 			continue
 		}
 
 		// add this instance to the initialCluster expression
 		initialCluster = append(initialCluster, fmt.Sprintf("%s=%s://%s:2380",
-			*instance.InstanceId, peerProtocol, *instance.PrivateIpAddress))
+			*instance.InstanceId, peerProtocol, *instance.PrivateDnsName))
 
 		// skip the local node, since we know it is not running yet
 		if *instance.InstanceId == *localInstance.InstanceId {
@@ -150,27 +150,27 @@ func buildCluster(s *ec2cluster.Cluster) (initialClusterState string, initialClu
 
 		// fetch the state of the node.
 		path := "stats/self"
-		resp, err := getApiResponse(*instance.PrivateIpAddress, *instance.InstanceId, path, http.MethodGet)
+		resp, err := getApiResponse(*instance.PrivateDnsName, *instance.InstanceId, path, http.MethodGet)
 		if err != nil {
 			log.Printf("%s: %s://%s:2379/v2/%s: %s", *instance.InstanceId, clientProtocol,
-				*instance.PrivateIpAddress, path, err)
+				*instance.PrivateDnsName, path, err)
 			continue
 		}
 		nodeState := etcdState{}
 		if err := json.NewDecoder(resp.Body).Decode(&nodeState); err != nil {
 			log.Printf("%s: %s://%s:2379/v2/%s: %s", *instance.InstanceId, clientProtocol,
-				*instance.PrivateIpAddress, path, err)
+				*instance.PrivateDnsName, path, err)
 			continue
 		}
 
 		if nodeState.LeaderInfo.Leader == "" {
 			log.Printf("%s: %s://%s:2379/v2/%s: alive, no leader", *instance.InstanceId, clientProtocol,
-				*instance.PrivateIpAddress, path)
+				*instance.PrivateDnsName, path)
 			continue
 		}
 
 		log.Printf("%s: %s://%s:2379/v2/%s: has leader %s", *instance.InstanceId, clientProtocol,
-			*instance.PrivateIpAddress, path, nodeState.LeaderInfo.Leader)
+			*instance.PrivateDnsName, path, nodeState.LeaderInfo.Leader)
 		if initialClusterState != "existing" {
 			initialClusterState = "existing"
 
@@ -179,10 +179,10 @@ func buildCluster(s *ec2cluster.Cluster) (initialClusterState string, initialClu
 			log.Printf("joining cluster via %s", *instance.InstanceId)
 			m := etcdMember{
 				Name:     *localInstance.InstanceId,
-				PeerURLs: []string{fmt.Sprintf("%s://%s:2380", peerProtocol, *localInstance.PrivateIpAddress)},
+				PeerURLs: []string{fmt.Sprintf("%s://%s:2380", peerProtocol, *localInstance.PrivateDnsName)},
 			}
 			body, _ := json.Marshal(m)
-			getApiResponseWithBody(*instance.PrivateIpAddress, *instance.InstanceId, "members", http.MethodPost, "application/json", bytes.NewReader(body))
+			getApiResponseWithBody(*instance.PrivateDnsName, *instance.InstanceId, "members", http.MethodPost, "application/json", bytes.NewReader(body))
 		}
 	}
 	return initialClusterState, initialCluster, nil
@@ -242,12 +242,12 @@ func main() {
 
 	envs := []string{
 		fmt.Sprintf("ETCD_NAME=%s", *localInstance.InstanceId),
-		fmt.Sprintf("ETCD_ADVERTISE_CLIENT_URLS=%s://%s:2379", clientProtocol, *localInstance.PrivateIpAddress),
+		fmt.Sprintf("ETCD_ADVERTISE_CLIENT_URLS=%s://%s:2379", clientProtocol, *localInstance.PrivateDnsName),
 		fmt.Sprintf("ETCD_LISTEN_CLIENT_URLS=%s://0.0.0.0:2379", clientProtocol),
 		fmt.Sprintf("ETCD_LISTEN_PEER_URLS=%s://0.0.0.0:2380", peerProtocol),
 		fmt.Sprintf("ETCD_INITIAL_CLUSTER_STATE=%s", initialClusterState),
 		fmt.Sprintf("ETCD_INITIAL_CLUSTER=%s", strings.Join(initialCluster, ",")),
-		fmt.Sprintf("ETCD_INITIAL_ADVERTISE_PEER_URLS=%s://%s:2380", peerProtocol, *localInstance.PrivateIpAddress),
+		fmt.Sprintf("ETCD_INITIAL_ADVERTISE_PEER_URLS=%s://%s:2380", peerProtocol, *localInstance.PrivateDnsName),
 	}
 	asg, _ := s.AutoscalingGroup()
 	if asg != nil {
