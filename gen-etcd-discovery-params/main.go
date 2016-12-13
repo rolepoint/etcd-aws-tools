@@ -183,7 +183,6 @@ func buildCluster(s *ec2cluster.Cluster) (initialClusterState string, initialClu
 			}
 			body, _ := json.Marshal(m)
 			getApiResponseWithBody(*instance.PrivateIpAddress, *instance.InstanceId, "members", http.MethodPost, "application/json", bytes.NewReader(body))
-			//http.Post(fmt.Sprintf("%s://%s:2379/v2/members", clientProtocol, *instance.PrivateIpAddress),	"application/json", bytes.NewReader(body))
 		}
 	}
 	return initialClusterState, initialCluster, nil
@@ -240,8 +239,6 @@ func main() {
 	}
 
 	initialClusterState, initialCluster, err := buildCluster(s)
-
-	// TODO: instead of building a command and running it, lets just output to a specific env file.
 
 	envs := []string{
 		fmt.Sprintf("ETCD_NAME=%s", *localInstance.InstanceId),
