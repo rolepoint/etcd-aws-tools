@@ -194,10 +194,11 @@ func main() {
 	clusterTagName := flag.String("tag", "aws:autoscaling:groupName",
 		"The instance tag that is common to all members of the cluster")
 
+	etcdKeyFile = flag.String("etcd-key-file", "", "Path to the TLS key")
 	etcdCertFile = flag.String("etcd-cert-file", os.Getenv("ETCD_CERT_FILE"),
 		"Path to the client server TLS cert file. "+
 			"Environment variable: ETCD_CERT_FILE")
-	etcdTrustedCaFile = flag.String("etcd-trusted-ca-file", os.Getenv("ETCD_TRUSTED_CA_FILE"),
+	etcdTrustedCaFile = flag.String("etcd-ca-file", os.Getenv("ETCD_TRUSTED_CA_FILE"),
 		"Path to the client server TLS trusted CA key file. "+
 			"Environment variable: ETCD_TRUSTED_CA_FILE")
 
