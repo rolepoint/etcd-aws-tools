@@ -138,6 +138,11 @@ func buildCluster(s *ec2cluster.Cluster) (initialClusterState string, initialClu
 		if instance.PrivateDnsName == nil {
 			continue
 		}
+		state := *instance.State.Name
+
+		if state == ec2.InstanceStateNameTerminated {
+			continue
+		}
 
 		// add this instance to the initialCluster expression
 		initialCluster = append(initialCluster, fmt.Sprintf("%s=%s://%s:2380",
