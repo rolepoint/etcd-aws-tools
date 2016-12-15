@@ -8,6 +8,7 @@ clean:
 
 docker: $(LINUX_BINARY)
 	docker build -t obmarg/gen-etcd-discovery-params .
+	docker push obmarg/gen-etcd-discovery-params
 
 $(LINUX_BINARY): build/ main.go
 	docker run --rm -it -v"$(CURDIR)":/usr/src/ golang:1.7.4 /bin/bash -c "cd /usr/src/ && go get ; CGO_ENABLED=0 go build -ldflags \"-s\" -o $(LINUX_BINARY)"
