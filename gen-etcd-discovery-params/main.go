@@ -193,12 +193,7 @@ func buildCluster(s *ec2cluster.Cluster) (initialClusterState string, initialClu
 	return initialClusterState, initialCluster, nil
 }
 
-func main() {
-	instanceID := flag.String("instance", "",
-		"The instance ID of the cluster member. If not supplied, then the instance ID is determined from EC2 metadata")
-	clusterTagName := flag.String("tag", "aws:autoscaling:groupName",
-		"The instance tag that is common to all members of the cluster")
-
+func parseTlsParams() {
 	etcdKeyFile = flag.String("etcd-key-file", "", "Path to the TLS key")
 	etcdCertFile = flag.String("etcd-cert-file", os.Getenv("ETCD_CERT_FILE"),
 		"Path to the client server TLS cert file. "+
@@ -218,6 +213,15 @@ func main() {
 		clientProtocol = "https"
 		peerProtocol = "https"
 	}
+}
+
+func main() {
+	instanceID := flag.String("instance", "",
+		"The instance ID of the cluster member. If not supplied, then the instance ID is determined from EC2 metadata")
+	clusterTagName := flag.String("tag", "aws:autoscaling:groupName",
+		"The instance tag that is common to all members of the cluster")
+
+	parseTlsParams()
 
 	var err error
 	if *instanceID == "" {
