@@ -92,28 +92,28 @@ func getApiResponseWithBody(privateIpAddress string, instanceId string, path str
 	var err error
 	var req *http.Request
 
-	if bodyType == "" {
-		req, _ = http.NewRequest(method, fmt.Sprintf("%s://%s:2379/v2/%s", clientProtocol, privateIpAddress, path), body)
+	url := fmt.Sprintf("%s://%s:2379/v2/%s", clientProtocol, privateIpAddress, path)
+
+	req, err = http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s %s://%s:2379/v2/%s: %s", instanceId, method, clientProtocol, privateIpAddress, path, err)
 	}
 
+	if bodyType != "" {
+		req.Header.Set("Content-Type", bodyType)
+	}
+
+	client := http.DefaultClient
 	if clientTlsEnabled {
-		tlsConfig, _ := getTlsConfig()
+		tlsConfig, err := getTlsConfig()
+		if err != nil {
+			log.Fatalf("Error in getTlsConfig: %s", err)
+		}
 		transport := &http.Transport{TLSClientConfig: tlsConfig}
-		client := &http.Client{Transport: transport}
-
-		if bodyType != "" {
-			client.Post(fmt.Sprintf("%s://%s:2379/v2/%s", clientProtocol, privateIpAddress, path), bodyType, body) // TLS POST request
-		} else {
-			resp, err = client.Do(req) // TLS request
-		}
-	} else {
-		if bodyType != "" {
-			http.Post(fmt.Sprintf("%s://%s:2379/v2/%s", clientProtocol, privateIpAddress, path), bodyType, body) // non-TLS POST request
-		} else {
-			resp, err = http.DefaultClient.Do(req) // non-TLS request
-		}
+		client = &http.Client{Transport: transport}
 	}
 
+	resp, err = client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s %s://%s:2379/v2/%s: %s", instanceId, method, clientProtocol, privateIpAddress, path, err)
 	}
