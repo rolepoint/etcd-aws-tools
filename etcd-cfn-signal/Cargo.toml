@@ -10,3 +10,4 @@ serde = "0.8.4"
 serde_json = "0.8.4"
 clap = "2.19.2"
 rusoto = { git = "https://github.com/obmarg/rusoto.git", features = ["cloudformation", "ec2"] }
+common = { path = "../common" }

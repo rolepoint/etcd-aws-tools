@@ -1,0 +1,10 @@
+[package]
+name = "common"
+version = "0.1.0"
+authors = ["Graeme Coupar <grambo@grambo.me.uk>"]
+
+[dependencies]
+hyper = "0.9.14"
+clap = "2.19.2"
+openssl = "0.7"
+rusoto = { git = "https://github.com/obmarg/rusoto.git", features = ["ec2"] }
