@@ -21,7 +21,6 @@ const RESOURCE_ID_TAG: &'static str = "aws:cloudformation:logical-id";
 ///
 /// Panics on failure.
 pub fn signal_cfn() {
-    temp();
     let region = get_region().expect("Getting region");
 
     let client = CloudFormationClient::new(
@@ -83,12 +82,6 @@ fn fetch_instance_metadata(endpoint : &str) -> Result<String, Error> {
     resp.read_to_string(&mut data).expect("Reading instance metadata");
 
     return Ok(data);
-}
-
-fn temp() {
-    let client = hyper::Client::new();
-
-    client.get(&"https://www.google.com".to_string()).send().unwrap();
 }
 
 
