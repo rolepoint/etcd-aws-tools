@@ -22,13 +22,14 @@ pub struct SSLOptions {
 }
 
 /// Polls the etcd health endpoint until it reports we're healthy.
-pub fn wait_till_healthy(url: String, options: SSLOptions) -> Result<(), Error> {
+pub fn wait_till_healthy(server_url: String, options: SSLOptions)
+                         -> Result<(), Error> {
     let client = try!(etcd_client(options));
     loop {
         thread::sleep(Duration::from_millis(1000));
         println!("Checking etcd status...");
 
-        // TODO: Need to prepend /health onto the URL...
+        let health_url = server_url + "/health";
         if let Ok(response) = client.get(&url).send() {
             if response.status != StatusCode::Ok {
                 println!("Got HTTP {}", response.status);
