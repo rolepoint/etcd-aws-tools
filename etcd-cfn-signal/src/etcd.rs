@@ -25,12 +25,13 @@ pub struct SSLOptions {
 pub fn wait_till_healthy(server_url: String, options: SSLOptions)
                          -> Result<(), Error> {
     let client = try!(etcd_client(options));
+    let health_url = server_url + "/health";
+
     loop {
         thread::sleep(Duration::from_millis(1000));
         println!("Checking etcd status...");
 
-        let health_url = server_url + "/health";
-        if let Ok(response) = client.get(&url).send() {
+        if let Ok(response) = client.get(&health_url).send() {
             if response.status != StatusCode::Ok {
                 println!("Got HTTP {}", response.status);
                 continue;
