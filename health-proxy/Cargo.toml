@@ -1,0 +1,10 @@
+[package]
+name = "health-proxy"
+version = "0.1.0"
+authors = ["Graeme Coupar <grambo@grambo.me.uk>"]
+
+[dependencies]
+clap = "2.19.2"
+hyper = "0.9.14"
+openssl = "0.7"
+common = { path = "../common" }

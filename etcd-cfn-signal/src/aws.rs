@@ -1,18 +1,14 @@
 extern crate hyper;
 extern crate rusoto;
+extern crate common;
 
-use std::str::FromStr;
-use std::io::Read;
-
-use hyper::Error;
+use common::instance_metadata;
 
 use rusoto::ec2;
 use rusoto::ec2::{Ec2Client, DescribeInstancesRequest, TagList};
 use rusoto::cloudformation::{CloudFormationClient, SignalResourceInput};
 use rusoto::{DefaultCredentialsProvider, Region};
 
-
-const INSTANCE_METADATA_URL: &'static str = "http://169.254.169.254/latest/meta-data/";
 const STACK_ID_TAG: &'static str = "aws:cloudformation:stack-id";
 const RESOURCE_ID_TAG: &'static str = "aws:cloudformation:logical-id";
 
@@ -21,16 +17,14 @@ const RESOURCE_ID_TAG: &'static str = "aws:cloudformation:logical-id";
 ///
 /// Panics on failure.
 pub fn signal_cfn() {
-    let region = get_region().expect("Getting region");
+    let region = instance_metadata::region().expect("Getting region");
 
     let client = CloudFormationClient::new(
         DefaultCredentialsProvider::new().unwrap(),
         region
     );
 
-    let instance_id = fetch_instance_metadata(
-        "instance-id"
-    ).expect("Getting instance ID");
+    let instance_id = instance_metadata::instance_id().expect("Get instance ID");
 
     let (stack_name, resource_id) = fetch_stack_and_resource_ids(
         region, &instance_id
@@ -49,39 +43,6 @@ pub fn signal_cfn() {
             unique_id: instance_id
         }
     ).expect("Signalling cloudformation");
-}
-
-
-/// Gets the current instances region using the ec2 instance metadata service.
-fn get_region() -> Result<Region, String> {
-    let mut availability_zone = try!(
-        fetch_instance_metadata("placement/availability-zone")
-            .map_err(|_| String::from("Failed getting avaliabilty zone"))
-    );
-
-    // Removing the last char of the availability zone gives us the region.
-    availability_zone.pop();
-
-    return Region::from_str(availability_zone.as_str())
-        .map_err(|_| String::from("Failed converting the region"));
-}
-
-
-/// Fetches instance metadata from the provided endpoint.
-///
-/// Endpoint should be relative to the latest/meta-data folder on the instance
-/// metadata server
-fn fetch_instance_metadata(endpoint : &str) -> Result<String, Error> {
-    let client = hyper::Client::new();
-
-    let url = String::from(INSTANCE_METADATA_URL) + endpoint;
-    let mut resp = try!(client.get(&url).send());
-
-    let mut data = String::new();
-
-    resp.read_to_string(&mut data).expect("Reading instance metadata");
-
-    return Ok(data);
 }
 
 
