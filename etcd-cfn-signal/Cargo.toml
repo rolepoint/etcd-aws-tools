@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Graeme Coupar <graeme@rolepoint.com>"]
 
 [dependencies]
-hyper = "0.9.14"
+hyper = "1.6.0"
 openssl = "0.7"
 serde = "0.8.4"
 serde_json = "0.8.4"
